@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    volumes:
+      - .:/app
     env_file:
       - .env
     ports:
@@ -8,6 +10,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - app_network
 
   db:
     image: postgres
@@ -23,7 +27,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    networks:
+      - app_network
 
 
 volumes:
   postgres:
+
+networks:
+  app_network:
