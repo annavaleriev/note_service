@@ -2,7 +2,8 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from notes.models import UserProfile, Hub, CarLoanCenter, Notes
-from notes.serializer import UserProfileSerializer, HubSerializer, CarLoanCenterSerializer, NotesSerializer
+from notes.serializer import UserProfileSerializer, HubSerializer, CarLoanCenterSerializer, NotesSerializer, \
+    NotesCreateSerializer
 
 
 class UserProfileViesSet(viewsets.ModelViewSet):
@@ -10,6 +11,7 @@ class UserProfileViesSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
+
 
 class HubViewSet(viewsets.ModelViewSet):
     """ViewSet для хаба"""
@@ -27,6 +29,11 @@ class CarLoanCenterViewSet(viewsets.ModelViewSet):
 
 class NotesViewSet(viewsets.ModelViewSet):
     """ViewSet для записок"""
-    queryset = Notes.objects.all()
+    queryset = Notes.objects.all().order_by("subject")
     serializer_class = NotesSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return NotesCreateSerializer
+        return super().get_serializer_class()
