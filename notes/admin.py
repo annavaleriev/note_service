@@ -3,8 +3,6 @@ from django.contrib import admin
 from notes.models import UserProfile, CarLoanCenter
 
 
-# Register your models here.
-
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     fields = ("user", "car_loan_center")
