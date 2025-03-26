@@ -4,6 +4,11 @@ from django.db import models
 from notes.validators import validate_parus_url
 
 
+NULLABLE = {
+    "blank": True,
+    "null": True,
+}
+
 User = get_user_model()
 
 
@@ -15,6 +20,9 @@ class UserProfile(models.Model):
         verbose_name="Центр автокредитования",
         help_text="Выберите центр автокредитования",
     )
+
+    def __str__(self):
+        return f"{self.user.last_name} {self.user.first_name}"
 
     class Meta:
         verbose_name = "Профиль"
@@ -28,11 +36,12 @@ class Notes(models.Model):
         ACTIVE = "ACTIVE", "Активна"
         IN_PROGRESS = "IN_PROGRESS", "Действующая"
 
-    parus_url = models.CharField(
+    pyrus_url = models.CharField(
         validators=[validate_parus_url],
         max_length=255,
-        verbose_name="Ссылка на Парус",
-        help_text="Введите ссылку на Парус",
+        verbose_name="Ссылка на Pyrus",
+        help_text="Введите ссылку на Pyrus",
+        **NULLABLE
     )
     car_loan_center = models.ForeignKey(
         "CarLoanCenter",
@@ -53,6 +62,7 @@ class Notes(models.Model):
     appoval_date = models.DateTimeField(
         verbose_name="Дата утверждения",
         help_text="Дата утверждения записки",
+        **NULLABLE
     )
     subject = models.CharField(
         max_length=255,
@@ -61,15 +71,17 @@ class Notes(models.Model):
     )
     owner = models.ForeignKey(
         UserProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         verbose_name="Владелец",
         help_text="Выберите пользователя",
+        null=True
     )
     observers = models.ManyToManyField(
         UserProfile,
         related_name="observers",
         verbose_name="Наблюдатели",
         help_text="Выберите наблюдателей",
+        blank=True
     )
     status = models.CharField(
         max_length=20,
