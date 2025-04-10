@@ -1,6 +1,10 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DJANGO_ENV: ${DJANGO_ENV}
     volumes:
       - .:/app
     env_file:

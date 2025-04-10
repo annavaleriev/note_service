@@ -1,5 +1,5 @@
 from django.contrib import admin
-
+from django.utils.html import format_html
 
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
@@ -92,20 +92,13 @@ class NotesAdmin(admin.ModelAdmin):
         return queryset.select_related("owner", "owner__user")
 
     def get_observers(self, obj):
-        return "\n".join(
-            [
-                f"{user_profile.user.last_name} {user_profile.user.first_name}"
-                for user_profile in obj.observers.all()
-            ]
+        return format_html(
+            "<br>".join(
+                [
+                    f"{user_profile.user.last_name} {user_profile.user.first_name}"
+                    for user_profile in obj.observers.all()
+                ]
+            )
         )
 
     get_observers.short_description = "Наблюдатели"
-
-
-# def get_observers(self, obj):
-#     return mark_safe("<br>".join(
-#         [
-#             f"{user_profile.user.last_name} {user_profile.user.first_name}"
-#             for user_profile in obj.observers.all()
-#         ]
-#     ))

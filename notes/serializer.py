@@ -18,7 +18,7 @@ class HubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hub
-        fields = "__all__"
+        fields = ("name",)
 
 
 class CarLoanCenterSerializer(serializers.ModelSerializer):
@@ -48,6 +48,7 @@ class NotesBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notes
         fields = (
+            "id",
             "pyrus_url",
             "car_loan_center",
             "appoval_date",
