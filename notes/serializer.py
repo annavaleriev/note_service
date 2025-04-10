@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from notes.models import Hub, CarLoanCenter, UserProfile, Notes
+from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name')
+        fields = ("first_name", "last_name")
 
 
 class HubSerializer(serializers.ModelSerializer):
@@ -49,11 +49,11 @@ class NotesBaseSerializer(serializers.ModelSerializer):
         model = Notes
         fields = (
             "pyrus_url",
-            'car_loan_center',
+            "car_loan_center",
             "appoval_date",
-            'subject',
+            "subject",
             "observers",
-            'owner',
+            "owner",
         )
 
 
@@ -63,11 +63,7 @@ class NotesSerializer(NotesBaseSerializer):
     car_loan_center = CarLoanCenterSerializer(label="ЦАК")
 
     class Meta(NotesBaseSerializer.Meta):
-        fields = NotesBaseSerializer.Meta.fields + (
-            "created_at",
-            "update_at",
-            'status'
-        )
+        fields = NotesBaseSerializer.Meta.fields + ("created_at", "update_at", "status")
 
 
 class NotesCreateSerializer(NotesBaseSerializer):

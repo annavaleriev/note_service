@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 
-from notes.views import UserProfileViesSet, HubViewSet, CarLoanCenterViewSet, NotesViewSet
+from notes.views import (CarLoanCenterViewSet, HubViewSet, NotesViewSet,
+                         UserProfileViesSet)
 
 router = DefaultRouter()
 
