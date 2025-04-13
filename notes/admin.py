@@ -1,11 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
+from notes.mixins import SelectRelatedAdminMixin
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(SelectRelatedAdminMixin,admin.ModelAdmin):
+    """ Админка для профиля пользователя """
+
+    select_related_fields = ("user", "car_loan_center")
     fields = ("user", "car_loan_center")
     list_display = ("user", "car_loan_center")
     search_fields = ("user__last_name", "user__first_name")
@@ -13,7 +17,10 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 
 @admin.register(CarLoanCenter)
-class CarLoanCenterAdmin(admin.ModelAdmin):
+class CarLoanCenterAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
+    """ Админка для центра автокредитования """
+
+    select_related_fields = ("hub",)
     fields = ("name", "hub")
     list_display = ("name", "hub")
     search_fields = ("name",)
@@ -22,6 +29,8 @@ class CarLoanCenterAdmin(admin.ModelAdmin):
 
 @admin.register(Hub)
 class HubAdmin(admin.ModelAdmin):
+    """ Админка для ХАБ """
+
     fields = ("name",)
     list_display = ("name",)
     search_fields = ("name",)
@@ -29,7 +38,10 @@ class HubAdmin(admin.ModelAdmin):
 
 
 @admin.register(Notes)
-class NotesAdmin(admin.ModelAdmin):
+class NotesAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
+    """ Админка для записок """
+    select_related_fields = ("car_loan_center", "owner")
+
     fieldsets = (
         (
             "Общая информация",
@@ -87,9 +99,7 @@ class NotesAdmin(admin.ModelAdmin):
     filter_horizontal = ("observers",)
     autocomplete_fields = ("car_loan_center", "owner", "observers")
 
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        return queryset.select_related("owner", "owner__user")
+
 
     def get_observers(self, obj):
         return format_html(
