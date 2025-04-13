@@ -2,7 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from notes.filters import NotesFilter
+from notes.filters import NotesFilter, CarLoanCenterFilter
 from notes.models import CarLoanCenter, Hub, Notes
 from notes.serializer import (
     CarLoanCenterSerializer,
@@ -30,6 +30,7 @@ class CarLoanCenterViewSet(
     queryset = CarLoanCenter.objects.all().order_by("name")
     serializer_class = CarLoanCenterSerializer
     permission_classes = [IsAuthenticated]
+    filterset_class = CarLoanCenterFilter
 
 
 class NotesViewSet(viewsets.ModelViewSet):
