@@ -3,7 +3,6 @@ from django.db import models
 
 from notes.validators import validate_parus_url
 
-
 NULLABLE = {
     "blank": True,
     "null": True,
@@ -13,7 +12,9 @@ User = get_user_model()
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Пользователь")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, verbose_name="Пользователь"
+    )
     car_loan_center = models.ForeignKey(
         "CarLoanCenter",
         on_delete=models.CASCADE,
@@ -31,6 +32,7 @@ class UserProfile(models.Model):
 
 class Notes(models.Model):
     """Модель для записок"""
+
     class StatusNotes(models.TextChoices):
         DRAFT = "DRAFT", "Черновик"
         ACTIVE = "ACTIVE", "Активна"
@@ -41,7 +43,7 @@ class Notes(models.Model):
         max_length=255,
         verbose_name="Ссылка на Pyrus",
         help_text="Введите ссылку на Pyrus",
-        **NULLABLE
+        **NULLABLE,
     )
     car_loan_center = models.ForeignKey(
         "CarLoanCenter",
@@ -62,7 +64,7 @@ class Notes(models.Model):
     appoval_date = models.DateTimeField(
         verbose_name="Дата утверждения",
         help_text="Дата утверждения записки",
-        **NULLABLE
+        **NULLABLE,
     )
     subject = models.CharField(
         max_length=255,
@@ -74,14 +76,14 @@ class Notes(models.Model):
         on_delete=models.SET_NULL,
         verbose_name="Владелец",
         help_text="Выберите пользователя",
-        null=True
+        null=True,
     )
     observers = models.ManyToManyField(
         UserProfile,
         related_name="observers",
         verbose_name="Наблюдатели",
         help_text="Выберите наблюдателей",
-        blank=True
+        blank=True,
     )
     status = models.CharField(
         max_length=20,
@@ -92,8 +94,10 @@ class Notes(models.Model):
     )
 
     def __str__(self):
-        """ Возвращает строковое представление объекта """
-        return f" Записка {self.subject} {self.created_at} {self.status}"
+        """Возвращает строковое представление объекта"""
+        status_display = self.get_status_display()
+        formatted_date = self.created_at.strftime("%d.%m.%Y")
+        return f"Записка {self.subject} Статус: {status_display} Дата: {formatted_date}"
 
     class Meta:
         verbose_name = "Записка"
@@ -102,7 +106,7 @@ class Notes(models.Model):
 
 
 class CarLoanCenter(models.Model):
-    """ Модель для центра автокредитования """
+    """Модель для центра автокредитования"""
 
     name = models.CharField(
         max_length=255,
@@ -117,7 +121,7 @@ class CarLoanCenter(models.Model):
     )
 
     def __str__(self):
-        """ Возвращает строковое представление объекта """
+        """Возвращает строковое представление объекта"""
         return self.name
 
     class Meta:
@@ -136,7 +140,7 @@ class Hub(models.Model):
     )
 
     def __str__(self):
-        """ Возвращает строковое представление объекта """
+        """Возвращает строковое представление объекта"""
         return self.name
 
     class Meta:
