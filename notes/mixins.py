@@ -1,4 +1,6 @@
-class SelectRelatedAdminMixin:
+from django.contrib import admin
+
+class SelectRelatedAdminMixin(admin.ModelAdmin):
 
     """ Миксин для админки, который позволяет использовать select_related в queryset """
 

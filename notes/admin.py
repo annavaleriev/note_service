@@ -6,7 +6,7 @@ from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(SelectRelatedAdminMixin,admin.ModelAdmin):
+class UserProfileAdmin(SelectRelatedAdminMixin):
     """ Админка для профиля пользователя """
 
     select_related_fields = ("user", "car_loan_center")
@@ -17,7 +17,7 @@ class UserProfileAdmin(SelectRelatedAdminMixin,admin.ModelAdmin):
 
 
 @admin.register(CarLoanCenter)
-class CarLoanCenterAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
+class CarLoanCenterAdmin(SelectRelatedAdminMixin):
     """ Админка для центра автокредитования """
 
     select_related_fields = ("hub",)
@@ -38,7 +38,7 @@ class HubAdmin(admin.ModelAdmin):
 
 
 @admin.register(Notes)
-class NotesAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
+class NotesAdmin(SelectRelatedAdminMixin):
     """ Админка для записок """
     select_related_fields = ("car_loan_center", "owner")
 
