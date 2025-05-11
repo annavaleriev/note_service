@@ -12,6 +12,10 @@ User = get_user_model()
 
 
 class UserProfile(models.Model):
+    """Модель для профиля пользователя"""
+
+    HUB_LEADER_PERMISSION_NAME = "ХАБ Лидер"
+
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, verbose_name="Пользователь"
     )
