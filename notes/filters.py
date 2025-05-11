@@ -1,55 +1,73 @@
 import django_filters
 from django.db.models import Q
 
-from notes.models import Notes
+from notes.models import CarLoanCenter, Notes, UserProfile
 
 
 class NotesFilter(django_filters.FilterSet):
-    """ Фильтр по запискам """
+    """
+    Фильтр по запискам
+    pyrus_url - фильтр по ссылке на Pyrus
+    status - фильтр по статусу записки
+    subject - фильтр по теме записки
+    name - фильтр по имени и фамилии автора записки
+    """
 
-    # Фильтр по ссылке на Pyrus
-    parus_url = django_filters.CharFilter(method="filter_parus_url", required=False, label="Cсылка на Pyrus")
+    pyrus_url = django_filters.CharFilter(
+        field_name="pyrus_url", label="Cсылка на Pyrus", lookup_expr="icontains"
+    )
+    status = django_filters.MultipleChoiceFilter(
+        choices=Notes.StatusNotes.choices, label="Статус записки"
+    )
+    subject = django_filters.CharFilter(
+        field_name="subject", lookup_expr="icontains", label="Тема записки"
+    )
+    name = django_filters.CharFilter(
+        method="get_filtered_by_name",
+        label="Автор записки. Разрешен частичный поиск по Фамилии и Имени",
+    )
 
     @staticmethod
-    def filter_parus_url(queryset, name, value):
-        if value and value.startswith("https://pyrus.sovcombank.ru/"):
-            return queryset.filter(**{name + "__icontains": value})
-        return queryset.none()
-
-    # Фильтр по статусу
-    status = django_filters.MultipleChoiceFilter(choices=Notes.StatusNotes.choices, required=False, label="Статус записки")
-
-    # Фильтр по теме записки
-    subject = django_filters.CharFilter(lookup_expr="icontains", required=False, label="Тема записки")
-
-    # Фильтр по имени
-    name = django_filters.CharFilter(method="get_filtered_by_name", required=False, label="Автор записки")
-
-    @staticmethod
-    def get_filtered_by_name(queryset, _, search_text):
-        return queryset.filter(Q(owner__user__last_name__icontains=search_text))
+    def get_filtered_by_name(queryset, _, search_text, *args, **kwargs):
+        """Фильтр по имени и фамилии автора записки"""
+        return queryset.select_related("owner", "owner__user").filter(
+            Q(owner__user__last_name__icontains=search_text)
+            | Q(owner__user__first_name__icontains=search_text)
+        )
 
     class Meta:
         model = Notes
-        fields = ("status", "name")
+        fields = ("pyrus_url", "status", "subject", "name", "car_loan_center")
 
 
-# class NotesFilterByStatus(django_filters.FilterSet):
-#     """ Фильтр для поиска записок по статусу """
-#
-#     status = django_filters.ChoiceFilter(choices=Notes.StatusNotes.choices)
-#
-#     class Meta:
-#         model = Notes
-#         fields = ("status",)
+class UserProfileFilter(django_filters.FilterSet):
+    """Фильтр по пользователям"""
+
+    name = django_filters.CharFilter(
+        method="get_filtered_by_name",
+        label="Автор записки. Разрешен частичный поиск по Фамилии и Имени",
+    )
+
+    @staticmethod
+    def get_filtered_by_name(queryset, _, search_text, *args, **kwargs):
+        """Фильтр по имени и фамилии пользователя"""
+        return queryset.select_related("user").filter(
+            Q(user__last_name__icontains=search_text)
+            | Q(user__first_name__icontains=search_text)
+        )
+
+    class Meta:
+        model = UserProfile
+        fields = ("name",)
 
 
 class CarLoanCenterFilter(django_filters.FilterSet):
-    """ Фильтр по центру автокредитования """
+    """Фильтр по центру автокредитования"""
 
-    # Фильтр по названию центра автокредитования
-    name = django_filters.CharFilter(lookup_expr="icontains", required=False, label="Центр автокредитования")
+    name = django_filters.CharFilter(
+        lookup_expr="icontains", required=False, label="Центр автокредитования"
+    )
 
     class Meta:
-        model = Notes
+        model = CarLoanCenter
         fields = ("name",)
