@@ -1,13 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from notes.mixins import SelectRelatedAdminMixin
+from common.admin.base import SelectPrefetchRelatedModelAdmin
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(SelectRelatedAdminMixin,admin.ModelAdmin):
-    """ Админка для профиля пользователя """
+class UserProfileAdmin(SelectPrefetchRelatedModelAdmin):
+    """Админка для профиля пользователя"""
 
     select_related_fields = ("user", "car_loan_center")
     fields = ("user", "car_loan_center")
@@ -17,8 +17,8 @@ class UserProfileAdmin(SelectRelatedAdminMixin,admin.ModelAdmin):
 
 
 @admin.register(CarLoanCenter)
-class CarLoanCenterAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
-    """ Админка для центра автокредитования """
+class CarLoanCenterAdmin(SelectPrefetchRelatedModelAdmin):
+    """Админка для центра автокредитования"""
 
     select_related_fields = ("hub",)
     fields = ("name", "hub")
@@ -29,7 +29,7 @@ class CarLoanCenterAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
 
 @admin.register(Hub)
 class HubAdmin(admin.ModelAdmin):
-    """ Админка для ХАБ """
+    """Админка для ХАБ"""
 
     fields = ("name",)
     list_display = ("name",)
@@ -38,9 +38,11 @@ class HubAdmin(admin.ModelAdmin):
 
 
 @admin.register(Notes)
-class NotesAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
-    """ Админка для записок """
+class NotesAdmin(SelectPrefetchRelatedModelAdmin):
+    """Админка для записок"""
+
     select_related_fields = ("car_loan_center", "owner")
+    prefetch_related_fields = ("observers",)
 
     fieldsets = (
         (
@@ -99,9 +101,8 @@ class NotesAdmin(SelectRelatedAdminMixin, admin.ModelAdmin):
     filter_horizontal = ("observers",)
     autocomplete_fields = ("car_loan_center", "owner", "observers")
 
-
-
     def get_observers(self, obj):
+        """Получаем наблюдателей"""
         return format_html(
             "<br>".join(
                 [

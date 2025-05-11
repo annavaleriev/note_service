@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
@@ -28,7 +27,7 @@ class CarLoanCenterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CarLoanCenter
-        fields = ("name", "hub")
+        fields = ("pk", "name", "hub")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -43,6 +42,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class NotesBaseSerializer(serializers.ModelSerializer):
+    """Базовый сериализатор для записок"""
+
     owner = UserProfileSerializer(label="Владелец", read_only=True)
 
     class Meta:
@@ -68,12 +69,36 @@ class NotesSerializer(NotesBaseSerializer):
 
 
 class NotesCreateSerializer(NotesBaseSerializer):
+    """Сериализатор для создания записок"""
+
     def create(self, validated_data):
+        """Создаем записку"""
         request = self.context.get("request")
-        user_profile = UserProfile.objects.filter(user=request.user).first()
-        if not user_profile:
-            raise ValidationError("У вас нет доступа для создания СЗ")
-        instance = super().create(validated_data)
-        instance.owner = user_profile
-        instance.save()
-        return instance
+        user_profile = request.user.user_profile
+        validated_data["owner"] = user_profile.pk
+        validated_data["car_loan_center"] = user_profile.car_loan_center.pk
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        """Обновляем записку"""
+        validated_data.pop("car_loan_center", None)
+        return super().update(instance, validated_data)
+
+
+class PermissionSerializer(serializers.Serializer):
+    """Сериализатор для проверки прав пользователя"""
+
+    can_filter_by_car_loan_center = serializers.SerializerMethodField(
+        label="Разрешено фильтровать по ЦАК"
+    )
+
+    @staticmethod
+    def get_can_filter_by_car_loan_center(user_profile, *args, **kwargs) -> bool:
+        """Проверяем, есть ли у пользователя права на фильтрацию по ЦАК"""
+        user = user_profile.user
+        user_groups = user.groups.all().values_list("name", flat=True)
+        return user_profile.HUB_LEADER_PERMISSION_NAME in user_groups
+
+    class Meta:
+        model = UserProfile
+        fields = ("can_filter_by_car_loan_center",)
