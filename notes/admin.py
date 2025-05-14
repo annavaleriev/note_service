@@ -9,6 +9,10 @@ from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 class UserProfileAdmin(SelectPrefetchRelatedModelAdmin):
     """Админка для профиля пользователя"""
 
+
+
+
+
     select_related_fields = ("user", "car_loan_center")
     fields = ("user", "car_loan_center")
     list_display = ("user", "car_loan_center")
