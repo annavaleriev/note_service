@@ -15,6 +15,9 @@ class UserProfile(models.Model):
     """Модель для профиля пользователя"""
 
     HUB_LEADER_PERMISSION_NAME = "ХАБ Лидер"
+    MANAGERS_PERMISSION_NAME = "Управляющие"
+    OSKP_PERMISSION_NAME = "ОСКП"
+    GO_PERMISSION_NAME = "ГО"
 
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, verbose_name="Пользователь"
@@ -25,6 +28,46 @@ class UserProfile(models.Model):
         verbose_name="Центр автокредитования",
         help_text="Выберите центр автокредитования",
     )
+
+    # def save(
+    #     self,
+    #     *args,
+    #     force_insert=False,
+    #     force_update=False,
+    #     using=None,
+    #     update_fields=None,
+    # ):
+    #
+    #     super().save(...)
+
+    def get_user_groups_names(self):
+        """Возвращает список названий групп пользователя"""
+        return self.user.groups.values_list("name", flat=True)
+
+    @property
+    def in_hub_leader_group(self):
+        """Проверяет, является ли пользователь лидером хаба"""
+        user_groups = self.get_user_groups_names()
+        return self.HUB_LEADER_PERMISSION_NAME in user_groups
+
+    @property
+    def in_oskp_group(self):
+        """Проверяет, является ли пользователь членом группы ОСКП"""
+        user_groups = self.get_user_groups_names()
+        return self.OSKP_PERMISSION_NAME in user_groups
+
+    @property
+    def in_go_group(self):
+        """Проверяет, является ли пользователь членом группы ГО"""
+        user_groups = self.get_user_groups_names()
+        return self.GO_PERMISSION_NAME in user_groups
+
+    @property
+    def in_managers_group(self):
+        """Проверяет, является ли пользователь членом группы Управляющие"""
+        user_groups = self.get_user_groups_names()
+        return self.MANAGERS_PERMISSION_NAME in user_groups
+
 
     def __str__(self):
         return f"{self.user.last_name} {self.user.first_name}"
