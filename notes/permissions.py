@@ -1,4 +1,4 @@
-from rest_framework.permissions import SAFE_METHODS, BasePermission
+from rest_framework.permissions import BasePermission
 
 from notes.models import UserProfile
 
@@ -69,79 +69,25 @@ class CanChange(BasePermission):
 
         return super().has_permission(request, view)
 
-    # def has_object_permission(self, request, view, obj):
-    #     user_profile = request.user.userprofile
-    #     if (user_profile.in_go_group or user_profile.in_oskp_group) and request.method == "POST":
-    #         return False
-    #
-    #     return True
+class CanApproved(BasePermission):
+    """Проверяет, может ли пользователь согласовать записку"""
+    def has_permission(self, request, view):
+        """Проверяет, может ли пользователь согласовать записку"""
+        print("CanApproved")
+        user_profile = request.user.userprofile
+        print("in_oskp_group =", user_profile.in_oskp_group)
+        if request.method == "POST" and view.action == "approved":
+            return user_profile.in_oskp_group
+        return True
 
 
-# class GOPermission(BasePermission):
-#     """
-#     Проверяет, есть ли у пользователя группа GO
-#     Видят все СЗ
-#     Только чтение (GET, HEAD, OPTIONS)
-#     """
-#
-#     def has_permission(self, request, view):
-#         user_profile = request.user.userprofile
-#         if user_profile.in_go_group:
-#             return request.method in SAFE_METHODS
-#         return True
-#
-#     def has_object_permission(self, request, view, obj):
-#         user_profile = request.user.userprofile
-#         if user_profile.in_go_group:
-#             return request.method in SAFE_METHODS
-#         return True
+class CanClone(BasePermission):
+    """Проверяет, может ли пользователь клонировать записку"""
+    def has_permission(self, request, view):
+        """Проверяет, может ли пользователь клонировать записку"""
+        user_profile = request.user.userprofile
+        if request.method == "POST" and view.action == "clone":
+            if user_profile.in_go_group:
+                return False
 
-
-# class OSKPPermission(BasePermission):
-#     """
-#     Проверяет, есть ли у пользователя группа ОСКП
-#     Видят все СЗ
-#     Могут редактировать, удалять, согласовывать, копировать
-#     Не могут создавать
-#     """
-#
-#     def has_permission(self, request, view):
-#         user_profile: UserProfile = request.user.userprofile
-#         if user_profile and user_profile.in_oskp_group and request.method == "POST":
-#             return False
-#         return True
-#
-#     def has_object_permission(self, request, view, obj):
-#         user_profile = request.user.userprofile
-#         return user_profile and user_profile.in_oskp_group
-
-
-# class HubLeaderPermission(BasePermission):
-#     """
-#     Проверяет, есть ли у пользователя группа ХАБ Лидер
-#     Видят  СЗ своего Хаба
-#     Могут редактировать, удалять, копировать видимые СЗ
-#     Не могут согласовывать и администрировать
-#     Могут создавать СЗ только под Цаком своего Хаба
-#     """
-#
-#     def has_permission(self, request, view):
-#         user_profile: UserProfile = request.user.userprofile
-#         if user_profile and user_profile.in_hub_leader_group:
-#             if request.method == "POST":
-#                 # Проверяем, что ЦАК в запросе совпадает с ЦАК пользователя
-#                 if request.data.get("car_loan_center") != user_profile.car_loan_center.pk:
-#                     return False
-#             return True
-#
-#     def has_object_permission(self, request, view, obj):
-#         user_profile = request.user.userprofile
-#         if user_profile and user_profile.in_hub_leader_group:
-#             if request.method in SAFE_METHODS or request.method in ("PUT", "PATCH", "DELETE"):
-#                 if obj.hub.pk == user_profile.car_loan_center.hub.pk:
-#                     return True
-#
-#         if view.action == ("approved", "administration") :
-#             return False
-#
-#         return False
+        return super().has_permission(request, view)

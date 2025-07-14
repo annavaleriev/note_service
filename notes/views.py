@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, viewsets
@@ -9,7 +11,8 @@ from rest_framework.viewsets import GenericViewSet
 
 from notes.filters import CarLoanCenterFilter, NotesFilter, UserProfileFilter
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
-from notes.permissions import HasUserProfilePermission
+from notes.permissions import (CanCreate, CanUserDeleteNotes,
+                               HasUserProfilePermission, CanChange, CanApproved, CanClone)
 from notes.serializer import (CarLoanCenterSerializer, HubSerializer,
                               NotesCreateSerializer, NotesSerializer,
                               PermissionSerializer, UserProfileSerializer)
@@ -27,6 +30,8 @@ def check_user_access(user_profile, note):
 
 
 class UserProfileViewSet(mixins.ListModelMixin, GenericViewSet):
+    """ViewSet для профиля пользователя"""
+
     queryset = UserProfile.objects.all().order_by("car_loan_center")
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated, HasUserProfilePermission]
@@ -35,6 +40,7 @@ class UserProfileViewSet(mixins.ListModelMixin, GenericViewSet):
 
     @action(serializer_class=PermissionSerializer, detail=False)
     def permissions(self, request):
+        """Возвращает права пользователя"""
         user_profile = self.request.user.userprofile
         serializer = self.get_serializer(user_profile)
         return Response(serializer.data)
@@ -64,7 +70,13 @@ class NotesViewSet(viewsets.ModelViewSet):
 
     queryset = Notes.objects.all().order_by("subject")
     serializer_class = NotesSerializer
-    permission_classes = [IsAuthenticated, HasUserProfilePermission]
+    permission_classes = [
+        IsAuthenticated,
+        HasUserProfilePermission,
+        CanUserDeleteNotes,
+        CanCreate,
+        CanChange
+    ]
     filter_backends = [DjangoFilterBackend]
     filterset_class = NotesFilter
 
@@ -76,11 +88,40 @@ class NotesViewSet(viewsets.ModelViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        """Возвращает список записок где пользователь является владельцем или наблюдателем"""
+        """Возвращает список записок, где пользователь является владельцем или наблюдателем"""
         queryset = super().get_queryset()
-        user_profile = self.request.user.userprofile
+        user_profile: UserProfile = self.request.user.userprofile
+
+        if user_profile.in_go_group or user_profile.in_oskp_group:
+            return queryset
+
+        if user_profile.in_hub_leader_group:
+            return queryset.filter(car_loan_center__hub=user_profile.car_loan_center.hub)
 
         return queryset.filter(
             Q(car_loan_center=user_profile.car_loan_center)
             & (Q(owner=user_profile) | Q(observers=user_profile))
         )
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, HasUserProfilePermission, CanApproved])
+    def approved(self, request, pk=None):
+        """Согласование записки"""
+        note = self.get_object()
+        note.apr_date = date.today()
+        note.save()
+        return Response(
+            {
+                "approve": "Согласование прошло успешно"
+            }
+        )
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, HasUserProfilePermission, CanClone])
+    def clone(self, request, pk=None):
+        """Клонирование записки, Копировать СЗ как нулевую
+ (Копирование с обрывом связи с родительской СЗ)"""
+        note = self.get_object()
+        note.pyrus_url = None
+        note.pk = None
+        note.save()
+        serializer = self.get_serializer(note)
+        return Response(serializer.data)

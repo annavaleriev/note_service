@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from notes.models import CarLoanCenter, Hub, Notes, UserProfile
 
@@ -71,17 +72,44 @@ class NotesSerializer(NotesBaseSerializer):
 class NotesCreateSerializer(NotesBaseSerializer):
     """Сериализатор для создания записок"""
 
+    observers = serializers.PrimaryKeyRelatedField(
+        queryset=UserProfile.objects.all(),
+        many=True,
+        required=False,
+        help_text="Выберите наблюдателей",
+    )
+
+    def validate(self, attrs):
+        """Проверяем валидность данных"""
+        validated_data = super().validate(attrs)
+        observers = validated_data.get("observers")
+        request = self.context.get("request")
+        user_profile = request.user.userprofile
+        if user_profile in observers:
+            raise ValidationError(
+                {"observers": "Нельзя добавить владельца в наблюдатели"}
+            )
+        return validated_data
+
     def create(self, validated_data):
         """Создаем записку"""
         request = self.context.get("request")
-        user_profile = request.user.user_profile
-        validated_data["owner"] = user_profile.pk
-        validated_data["car_loan_center"] = user_profile.car_loan_center.pk
+        user_profile = request.user.userprofile
+        validated_data["owner"] = user_profile
+        validated_data["car_loan_center"] = user_profile.car_loan_center
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         """Обновляем записку"""
         validated_data.pop("car_loan_center", None)
+
+        observers = validated_data.pop("observers", None)
+        if observers is not None:
+            instance.observers.set(observers)
+            instance.save()
+
+
+
         return super().update(instance, validated_data)
 
 

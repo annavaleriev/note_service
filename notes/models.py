@@ -68,7 +68,6 @@ class UserProfile(models.Model):
         user_groups = self.get_user_groups_names()
         return self.MANAGERS_PERMISSION_NAME in user_groups
 
-
     def __str__(self):
         return f"{self.user.last_name} {self.user.first_name}"
 
